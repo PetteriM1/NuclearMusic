@@ -89,12 +89,14 @@ public class NuclearMusicPlugin extends PluginBase {
     }
 
     class NuclearMusicListener implements Listener {
+
         @EventHandler
         public void onBlockTouch(PlayerInteractEvent event) {
             if (event.getAction() != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
-            if (!event.getPlayer().isCreative()) return;
-            if (event.getPlayer().getInventory().getItemInHand().getId() != Item.DIAMOND_HOE) return;
+            if (!event.getPlayer().isOp()) return;
+            if (event.getItem().getId() != Item.DIAMOND_HOE) return;
             if (event.getBlock().getId() != Item.NOTEBLOCK) return;
+            if (event.getItem().getDamage() != 9999) return;
 
             Song song;
             NodeIntegerPosition node = new NodeIntegerPosition(event.getBlock());
@@ -118,7 +120,6 @@ public class NuclearMusicPlugin extends PluginBase {
             songPlayer.setPlaying(true);
             songPlayers.put(node, songPlayer);
             event.getPlayer().sendMessage("Now playing: " + song.getTitle());
-
         }
 
         @EventHandler
