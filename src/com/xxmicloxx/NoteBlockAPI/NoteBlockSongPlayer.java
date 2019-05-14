@@ -3,6 +3,7 @@ package com.xxmicloxx.NoteBlockAPI;
 import cn.nukkit.level.Sound;
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
+import cn.nukkit.network.protocol.BlockEventPacket;
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,6 +12,7 @@ import cn.nukkit.block.Block;
  * Time: 12:56
  */
 public class NoteBlockSongPlayer extends SongPlayer {
+
     private Block noteBlock;
 
     public NoteBlockSongPlayer(Song song) {
@@ -40,13 +42,13 @@ public class NoteBlockSongPlayer extends SongPlayer {
             if (note == null) {
                 continue;
             }
-            /*BlockEventPacket pk = new BlockEventPacket();
+            BlockEventPacket pk = new BlockEventPacket();
             pk.x = (int) noteBlock.x;
             pk.y = (int) noteBlock.y;
             pk.z = (int) noteBlock.z;
             pk.case1 = note.getInstrument();
             pk.case2 = note.getKey() - 33;
-            p.dataPacket(pk);*/
+            p.dataPacket(pk);
             Sound sound = null;
             switch (note.getInstrument()) {
                 case 0:
@@ -102,7 +104,9 @@ public class NoteBlockSongPlayer extends SongPlayer {
                 case 24: fl = 2.0f; break;
             }
 
-            p.getLevel().addSound(noteBlock, sound, 1, fl, new Player[]{p});
+            if (sound != null) {
+                p.getLevel().addSound(noteBlock, sound, 1, fl, p);
+            }
         }
     }
 }

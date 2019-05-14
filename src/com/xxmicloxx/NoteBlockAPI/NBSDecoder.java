@@ -14,10 +14,6 @@ public class NBSDecoder {
         return null;
     }
 
-    public static Song parse(InputStream inputStream) {
-        return parse(inputStream, null);
-    }
-
     private static Song parse(InputStream inputStream, File decodeFile) {
         HashMap<Integer, Layer> layerHashMap = new HashMap<>();
         try {

@@ -48,7 +48,7 @@ public class NuclearMusicPlugin extends PluginBase {
             if (song == null) return;
             songs.add(song);
         });
-        songs.sort((s1, s2) -> s1.getTitle().compareTo(s2.getTitle()));
+        songs.sort(Comparator.comparing(Song::getTitle));
         getLogger().info("Loaded " + songs.size() + " songs");
     }
 
