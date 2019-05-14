@@ -18,6 +18,7 @@ import java.util.*;
 
 public class NuclearMusicPlugin extends PluginBase {
 
+    public static NuclearMusicPlugin instance;
     private LinkedList<Song> songs = new LinkedList<>();
     private Map<NodeIntegerPosition, SongPlayer> songPlayers = new HashMap<>();
 
@@ -33,7 +34,10 @@ public class NuclearMusicPlugin extends PluginBase {
         return result;
     }
 
-    @Override
+    public void onLoad() {
+        instance = this;
+    }
+
     public void onEnable() {
         new File(getDataFolder() + "/tracks").mkdirs();
         getServer().getPluginManager().registerEvents(new NuclearMusicListener(), this);
@@ -52,7 +56,7 @@ public class NuclearMusicPlugin extends PluginBase {
         getLogger().info("Loaded " + songs.size() + " songs");
     }
 
-    private Song nextSong(Song now) {
+    public Song nextSong(Song now) {
         if (!songs.contains(now)) return songs.getFirst();
         if (songs.indexOf(now) >= songs.size() - 1) return songs.getFirst();
         return songs.get(songs.indexOf(now) + 1);

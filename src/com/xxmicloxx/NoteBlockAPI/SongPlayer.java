@@ -2,6 +2,8 @@ package com.xxmicloxx.NoteBlockAPI;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import com.fcmcpe.nuclear.music.NuclearMusicPlugin;
+import org.apache.logging.log4j.core.Core;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -164,13 +166,10 @@ public abstract class SongPlayer {
         calculateFade();
         tick++;
         if (tick > song.getLength()) {
-            playing = false;
             tick = -1;
-            if (autoDestroy) {
-                destroy();
-                return;
-            }
-            if (autoCycle) playing = true;
+            song = NuclearMusicPlugin.instance.nextSong(getSong());
+            lastPlayed = System.currentTimeMillis() + 2000;
+            return;
         }
         for (String s : playerList) {
             try {

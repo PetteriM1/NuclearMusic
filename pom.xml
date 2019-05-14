@@ -6,7 +6,7 @@
 
     <groupId>com.fcmcpe.nuclear.music</groupId>
     <artifactId>NuclearMusic</artifactId>
-    <version>1.1.0.1</version>
+    <version>1.1.0.2</version>
     <build>
         <defaultGoal>install</defaultGoal>
         <sourceDirectory>${basedir}/src</sourceDirectory>
