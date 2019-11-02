@@ -1,4 +1,4 @@
 name: NuclearMusic
 main: com.fcmcpe.nuclear.music.NuclearMusicPlugin
 version: "${pom.version}"
-api: ["1.0.5"]
+api: ["1.0.9"]

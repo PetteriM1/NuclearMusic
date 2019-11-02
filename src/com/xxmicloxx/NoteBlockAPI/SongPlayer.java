@@ -168,7 +168,7 @@ public abstract class SongPlayer {
         if (tick > song.getLength()) {
             tick = -1;
             song = NuclearMusicPlugin.instance.nextSong(getSong());
-            lastPlayed = System.currentTimeMillis() + 2000;
+            lastPlayed = System.currentTimeMillis() + 5000;
             return;
         }
         for (String s : playerList) {

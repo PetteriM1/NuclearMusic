@@ -67,11 +67,19 @@ public class NoteBlockSongPlayer extends SongPlayer {
                     sound = Sound.NOTE_HAT;
                     break;
                 case 5:
+                    sound = Sound.NOTE_GUITAR;
+                    break;
                 case 6:
+                    sound = Sound.NOTE_FLUTE;
+                    break;
                 case 7:
+                    sound = Sound.NOTE_BELL;
+                    break;
                 case 8:
+                    sound = Sound.NOTE_CHIME;
+                    break;
                 case 9:
-                case 10:
+                    sound = Sound.NOTE_XYLOPHONE;
                     break;
             }
 

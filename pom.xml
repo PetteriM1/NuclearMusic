@@ -6,7 +6,7 @@
 
     <groupId>com.fcmcpe.nuclear.music</groupId>
     <artifactId>NuclearMusic</artifactId>
-    <version>1.1.0.2</version>
+    <version>1.1.0.3</version>
     <build>
         <defaultGoal>install</defaultGoal>
         <sourceDirectory>${basedir}/src</sourceDirectory>
@@ -43,6 +43,10 @@
             <artifactId>nukkit</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
+            <!-- Use to build for experimental Nukkit builds
+            <scope>system</scope>
+            <systemPath>${basedir}/nukkit-1.0-SNAPSHOT.jar</systemPath>
+            -->
         </dependency>
     </dependencies>
     <properties>
