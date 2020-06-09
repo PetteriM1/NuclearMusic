@@ -41,11 +41,6 @@ public final class NoteBlockAPI {
     }
 
     public byte getPlayerVolume(Player p) {
-        Byte b = playerVolume.get(p.getName());
-        if (b == null) {
-            b = 100;
-            playerVolume.put(p.getName(), b);
-        }
-        return b;
+        return playerVolume.computeIfAbsent(p.getName(), k -> (byte) 100);
     }
 }

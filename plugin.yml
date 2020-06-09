@@ -2,3 +2,5 @@ name: NuclearMusic
 main: com.fcmcpe.nuclear.music.NuclearMusicPlugin
 version: "${pom.version}"
 api: ["1.0.9"]
+author: EaseCation, PetteriM1
+

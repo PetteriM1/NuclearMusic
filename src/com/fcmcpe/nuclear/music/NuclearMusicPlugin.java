@@ -3,6 +3,7 @@ package com.fcmcpe.nuclear.music;
 import cn.nukkit.Player;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
+import cn.nukkit.event.block.BlockBreakEvent;
 import cn.nukkit.event.player.PlayerInteractEvent;
 import cn.nukkit.event.player.PlayerJoinEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
@@ -40,8 +41,8 @@ public class NuclearMusicPlugin extends PluginBase {
 
     public void onEnable() {
         new File(getDataFolder() + "/tracks").mkdirs();
-        getServer().getPluginManager().registerEvents(new NuclearMusicListener(), this);
         loadAllSongs();
+        getServer().getPluginManager().registerEvents(new NuclearMusicListener(), this);
         getServer().getScheduler().scheduleAsyncTask(this, new TickerRunnable());
     }
 
@@ -97,33 +98,37 @@ public class NuclearMusicPlugin extends PluginBase {
         @EventHandler
         public void onBlockTouch(PlayerInteractEvent event) {
             if (event.getAction() != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
-            if (!event.getPlayer().isOp()) return;
-            if (event.getItem().getId() != Item.DIAMOND_HOE) return;
             if (event.getBlock().getId() != Item.NOTEBLOCK) return;
-            if (event.getItem().getDamage() != 9999) return;
-
             Song song;
             NodeIntegerPosition node = new NodeIntegerPosition(event.getBlock());
-
-            if (songPlayers.containsKey(node)) {
-                SongPlayer sp = songPlayers.get(node);
-                Song now = sp.getSong();
-                songPlayers.get(node).setPlaying(false);
-                songPlayers.remove(node);
-                song = nextSong(now);
-                getServer().getOnlinePlayers().forEach((s, p) -> sp.removePlayer(p));
+            if (!event.getPlayer().isOp() || event.getItem().getId() != Item.DIAMOND_HOE || event.getItem().getDamage() != 9999) {
+                if (songPlayers.containsKey(node)) {
+                    SongPlayer sp = songPlayers.get(node);
+                    song = sp.getSong();
+                    event.getPlayer().sendActionBar("§aNow playing: §7" + song.getTitle());
+                    event.setCancelled(true);
+                }
             } else {
-                song = songs.getFirst();
-            }
+                if (songPlayers.containsKey(node)) {
+                    SongPlayer sp = songPlayers.get(node);
+                    Song now = sp.getSong();
+                    songPlayers.get(node).setPlaying(false);
+                    songPlayers.remove(node);
+                    song = nextSong(now);
+                    getServer().getOnlinePlayers().forEach((s, p) -> sp.removePlayer(p));
+                } else {
+                    song = songs.getFirst();
+                }
 
-            NoteBlockSongPlayer songPlayer = new NoteBlockSongPlayer(song);
-            songPlayer.setNoteBlock(event.getBlock());
-            songPlayer.setAutoCycle(true);
-            songPlayer.setAutoDestroy(false);
-            getServer().getOnlinePlayers().forEach((s, p) -> songPlayer.addPlayer(p));
-            songPlayer.setPlaying(true);
-            songPlayers.put(node, songPlayer);
-            event.getPlayer().sendMessage("Now playing: " + song.getTitle());
+                NoteBlockSongPlayer songPlayer = new NoteBlockSongPlayer(song);
+                songPlayer.setNoteBlock(event.getBlock());
+                songPlayer.setAutoCycle(true);
+                songPlayer.setAutoDestroy(false);
+                getServer().getOnlinePlayers().forEach((s, p) -> songPlayer.addPlayer(p));
+                songPlayer.setPlaying(true);
+                songPlayers.put(node, songPlayer);
+                event.getPlayer().sendActionBar("§aNow playing: §7" + song.getTitle());
+            }
         }
 
         @EventHandler
@@ -136,6 +141,19 @@ public class NuclearMusicPlugin extends PluginBase {
         public void onQuit(PlayerQuitEvent event) {
             Player player = event.getPlayer();
             NoteBlockAPI.getInstance().stopPlaying(player);
+        }
+
+        @EventHandler
+        public void onBlockBreak(BlockBreakEvent event) {
+            if (event.getBlock().getId() == Item.NOTEBLOCK) {
+                NodeIntegerPosition node = new NodeIntegerPosition(event.getBlock());
+                SongPlayer sp = songPlayers.get(node);
+                if (sp != null) {
+                    sp.setPlaying(false);
+                    sp.destroy();
+                }
+                songPlayers.remove(node);
+            }
         }
     }
 

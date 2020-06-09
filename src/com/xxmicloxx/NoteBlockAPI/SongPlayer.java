@@ -3,7 +3,6 @@ package com.xxmicloxx.NoteBlockAPI;
 import cn.nukkit.Player;
 import cn.nukkit.Server;
 import com.fcmcpe.nuclear.music.NuclearMusicPlugin;
-import org.apache.logging.log4j.core.Core;
 
 import java.util.ArrayList;
 import java.util.Collections;
