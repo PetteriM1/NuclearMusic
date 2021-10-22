@@ -5,15 +5,15 @@ import java.util.HashMap;
 
 public class Song {
 
-    private HashMap<Integer, Layer> layerHashMap;
-    private short songHeight;
-    private short length;
-    private String title;
-    private File path;
-    private String author;
-    private String description;
-    private float speed;
-    private float delay;
+    private final HashMap<Integer, Layer> layerHashMap;
+    private final short songHeight;
+    private final short length;
+    private final String title;
+    private final File path;
+    private final String author;
+    private final String description;
+    private final float speed;
+    private final float delay;
 
     public Song(Song other) {
         this.speed = other.getSpeed();

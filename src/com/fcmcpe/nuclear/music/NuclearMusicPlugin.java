@@ -1,6 +1,6 @@
 package com.fcmcpe.nuclear.music;
 
-import cn.nukkit.Player;
+import cn.nukkit.block.Block;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.block.BlockBreakEvent;
@@ -12,6 +12,7 @@ import cn.nukkit.level.Level;
 import cn.nukkit.level.Position;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.scheduler.AsyncTask;
+import cn.nukkit.utils.Config;
 import com.xxmicloxx.NoteBlockAPI.*;
 
 import java.io.File;
@@ -20,8 +21,8 @@ import java.util.*;
 public class NuclearMusicPlugin extends PluginBase {
 
     public static NuclearMusicPlugin instance;
-    private LinkedList<Song> songs = new LinkedList<>();
-    private Map<NodeIntegerPosition, SongPlayer> songPlayers = new HashMap<>();
+    private final LinkedList<Song> songs = new LinkedList<>();
+    private final Map<NodeIntegerPosition, SongPlayer> songPlayers = new HashMap<>();
 
     static List<File> getAllNBSFiles(File path) {
         List<File> result = new ArrayList<>();
@@ -35,25 +36,68 @@ public class NuclearMusicPlugin extends PluginBase {
         return result;
     }
 
-    public void onLoad() {
-        instance = this;
-    }
-
+    @Override
     public void onEnable() {
-        new File(getDataFolder() + "/tracks").mkdirs();
+        instance = this;
         loadAllSongs();
+        Config noteblocks = new Config(getDataFolder() + "/noteblocks.yml", Config.YAML);
+        List<String> positions = noteblocks.getStringList("positions");
+        for (String position : positions) {
+            String[] data = position.split(":");
+            if (data.length != 4) {
+                getLogger().warning("Corrupted save data found: " + position);
+                continue;
+            }
+            Level level = getServer().getLevelByName(data[3]);
+            if (level == null) {
+                getLogger().warning("Unknown level: " + data[3]);
+                continue;
+            }
+            int x, y, z;
+            try {
+                x = Integer.parseInt(data[0]);
+                y = Integer.parseInt(data[1]);
+                z = Integer.parseInt(data[2]);
+            } catch (NumberFormatException ignore) {
+                getLogger().warning("Corrupted save data found: " + position);
+                continue;
+            }
+            Block block = level.getBlock(x, y, z, true);
+            if (block.getId() != Item.NOTEBLOCK) {
+                getLogger().warning("Noteblock does not exist at " + x + ' ' + y + ' ' + z);
+                continue;
+            }
+            Song song = songs.getFirst();
+            NoteBlockSongPlayer songPlayer = new NoteBlockSongPlayer(song);
+            songPlayer.setNoteBlock(block);
+            songPlayer.setAutoCycle(true);
+            songPlayer.setAutoDestroy(false);
+            getServer().getOnlinePlayers().forEach((s, p) -> songPlayer.addPlayer(p));
+            songPlayer.setPlaying(true);
+            songPlayers.put(new NodeIntegerPosition(block), songPlayer);
+        }
         getServer().getPluginManager().registerEvents(new NuclearMusicListener(), this);
         getServer().getScheduler().scheduleAsyncTask(this, new TickerRunnable());
     }
 
+    @Override
+    public void onDisable() {
+        Config noteblocks = new Config(getDataFolder() + "/noteblocks.yml", Config.YAML);
+        List<String> positions = new ArrayList<>();
+        songPlayers.forEach((pos, sp) -> positions.add(pos.x + ":" + pos.y + ':' + pos.z  + ':' + pos.level.getName()));
+        noteblocks.set("positions", positions);
+        noteblocks.save();
+    }
+
     private void loadAllSongs() {
+        new File(getDataFolder() + "/tracks").mkdirs();
         List<File> files = getAllNBSFiles(new File(getDataFolder(), "tracks"));
         files.forEach(file -> {
             Song song = NBSDecoder.parse(file);
             if (song == null) return;
             songs.add(song);
         });
-        songs.sort(Comparator.comparing(Song::getTitle));
+        Collections.shuffle(songs);
         getLogger().info("Loaded " + songs.size() + " songs");
     }
 
@@ -89,7 +133,7 @@ public class NuclearMusicPlugin extends PluginBase {
 
         @Override
         public int hashCode() {
-            return (x + ":" + y + ":" + z + ":" + level.getName()).hashCode();
+            return (x + ":" + y + ':' + z + ':' + level.getName()).hashCode();
         }
     }
 
@@ -101,7 +145,7 @@ public class NuclearMusicPlugin extends PluginBase {
             if (event.getBlock().getId() != Item.NOTEBLOCK) return;
             Song song;
             NodeIntegerPosition node = new NodeIntegerPosition(event.getBlock());
-            if (!event.getPlayer().isOp() || event.getItem().getId() != Item.DIAMOND_HOE || event.getItem().getDamage() != 9999) {
+            if (event.getItem().getId() != Item.DIAMOND_HOE || event.getItem().getDamage() != 9999 || !event.getPlayer().hasPermission("nuclearmusic.setup")) {
                 if (songPlayers.containsKey(node)) {
                     SongPlayer sp = songPlayers.get(node);
                     song = sp.getSong();
@@ -117,7 +161,12 @@ public class NuclearMusicPlugin extends PluginBase {
                     song = nextSong(now);
                     getServer().getOnlinePlayers().forEach((s, p) -> sp.removePlayer(p));
                 } else {
-                    song = songs.getFirst();
+                    try {
+                        song = songs.getFirst();
+                    } catch (NoSuchElementException ignore) {
+                        event.getPlayer().sendMessage("§cError! No songs loaded!");
+                        return;
+                    }
                 }
 
                 NoteBlockSongPlayer songPlayer = new NoteBlockSongPlayer(song);
@@ -133,14 +182,12 @@ public class NuclearMusicPlugin extends PluginBase {
 
         @EventHandler
         public void onJoin(PlayerJoinEvent event) {
-            Player player = event.getPlayer();
-            songPlayers.forEach((p, s) -> s.addPlayer(player));
+            songPlayers.forEach((p, s) -> s.addPlayer(event.getPlayer()));
         }
 
         @EventHandler
         public void onQuit(PlayerQuitEvent event) {
-            Player player = event.getPlayer();
-            NoteBlockAPI.getInstance().stopPlaying(player);
+            NoteBlockAPI.getInstance().stopPlaying(event.getPlayer());
         }
 
         @EventHandler

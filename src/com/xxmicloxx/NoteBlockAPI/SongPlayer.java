@@ -1,7 +1,6 @@
 package com.xxmicloxx.NoteBlockAPI;
 
 import cn.nukkit.Player;
-import cn.nukkit.Server;
 import com.fcmcpe.nuclear.music.NuclearMusicPlugin;
 
 import java.util.ArrayList;
@@ -105,7 +104,7 @@ public abstract class SongPlayer {
         }
     }
 
-    public abstract void playTick(Player p, int tick);
+    public abstract void playTick(ArrayList<String> players, int tick);
 
     public void destroy() {
         synchronized (this) {
@@ -152,6 +151,7 @@ public abstract class SongPlayer {
     }
 
     public void setVolume(byte volume) {
+        if (volume < 0 || volume > 100) throw new IllegalArgumentException("Volume must be 0-100");
         this.volume = volume;
     }
 
@@ -161,22 +161,17 @@ public abstract class SongPlayer {
 
     public final void tryPlay() {
         if (!playing) return;
-        if (System.currentTimeMillis() - lastPlayed < 50 * getSong().getDelay()) return;
+        if (System.currentTimeMillis() - lastPlayed < 50 * song.getDelay()) return;
         calculateFade();
         tick++;
         if (tick > song.getLength()) {
             tick = -1;
-            song = NuclearMusicPlugin.instance.nextSong(getSong());
+            song = NuclearMusicPlugin.instance.nextSong(song);
             lastPlayed = System.currentTimeMillis() + 5000;
             return;
         }
-        for (String s : playerList) {
-            try {
-                Player p = Server.getInstance().getPlayerExact(s);
-                if (p == null) continue;
-                playTick(p, tick);
-            } catch (Exception ignore) {
-            }
+        if (!playerList.isEmpty()) {
+            playTick(playerList, tick);
         }
         lastPlayed = System.currentTimeMillis();
     }

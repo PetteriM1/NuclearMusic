@@ -1,9 +1,14 @@
 package com.xxmicloxx.NoteBlockAPI;
 
+import cn.nukkit.Server;
+import cn.nukkit.item.Item;
 import cn.nukkit.level.Sound;
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
 import cn.nukkit.network.protocol.BlockEventPacket;
+import cn.nukkit.network.protocol.PlaySoundPacket;
+
+import java.util.ArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,14 +33,13 @@ public class NoteBlockSongPlayer extends SongPlayer {
     }
 
     @Override
-    public void playTick(Player p, int tick) {
-        if (noteBlock.getId() != 25) {
-            return;
-        }
+    public void playTick(ArrayList<String> players, int tick) {
+        if (noteBlock.getId() != Item.NOTEBLOCK) return;
+        float vol = getVolume() / 100f;
+        if (vol <= 0f) return;
 
-        if (!p.getLevel().getFolderName().equals(noteBlock.getLevel().getFolderName())) {
-            return;
-        }
+        Sound sound = null;
+        float fl = 0;
 
         for (Layer l : song.getLayerHashMap().values()) {
             Note note = l.getNote(tick);
@@ -43,7 +47,6 @@ public class NoteBlockSongPlayer extends SongPlayer {
                 continue;
             }
 
-            Sound sound = null;
             switch (note.getInstrument()) {
                 case 0:
                     sound = Sound.NOTE_HARP;
@@ -77,8 +80,8 @@ public class NoteBlockSongPlayer extends SongPlayer {
                     break;
             }
 
-            float fl = 0;
-            switch (note.getKey() - 33) {
+            int key33 = note.getKey() - 33;
+            switch (key33) {
                 case 0: fl = 0.5f; break;
                 case 1: fl = 0.529732f; break;
                 case 2: fl = 0.561231f; break;
@@ -106,16 +109,31 @@ public class NoteBlockSongPlayer extends SongPlayer {
                 case 24: fl = 2.0f; break;
             }
 
-            if (sound != null) {
-                p.getLevel().addSound(noteBlock, sound, 1, fl, p);
+            BlockEventPacket particlePk = new BlockEventPacket();
+            particlePk.x = (int) noteBlock.x;
+            particlePk.y = (int) noteBlock.y;
+            particlePk.z = (int) noteBlock.z;
+            particlePk.case1 = note.getInstrument();
+            particlePk.case2 = key33;
+            particlePk.tryEncode();
 
-                BlockEventPacket pk = new BlockEventPacket();
-                pk.x = (int) noteBlock.x;
-                pk.y = (int) noteBlock.y;
-                pk.z = (int) noteBlock.z;
-                pk.case1 = note.getInstrument();
-                pk.case2 = note.getKey() - 33;
-                p.dataPacket(pk);
+            for (String pl : players) {
+                try {
+                    Player p = Server.getInstance().getPlayerExact(pl);
+                    if (p == null) continue;
+                    if (p.getLevel().getId() != noteBlock.getLevel().getId()) continue;
+                    if (sound != null) {
+                        PlaySoundPacket soundPk = new PlaySoundPacket();
+                        soundPk.name = sound.getSound();
+                        soundPk.volume = vol;
+                        soundPk.pitch = fl;
+                        soundPk.x = (int) p.x;
+                        soundPk.y = (int) p.y;
+                        soundPk.z = (int) p.z;
+                        p.dataPacket(soundPk);
+                        p.dataPacket(particlePk);
+                    }
+                } catch (Exception ignore) {}
             }
         }
     }

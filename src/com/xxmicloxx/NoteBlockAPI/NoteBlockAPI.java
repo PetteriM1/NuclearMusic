@@ -28,10 +28,11 @@ public final class NoteBlockAPI {
     }
 
     public void stopPlaying(Player p) {
-        if (playingSongs.get(p.getName()) == null) {
+        ArrayList<SongPlayer> sp = playingSongs.get(p.getName());
+        if (sp == null) {
             return;
         }
-        for (SongPlayer s : playingSongs.get(p.getName())) {
+        for (SongPlayer s : sp) {
             s.removePlayer(p);
         }
     }
