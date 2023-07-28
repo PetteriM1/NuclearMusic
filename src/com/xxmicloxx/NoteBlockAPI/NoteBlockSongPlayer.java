@@ -7,6 +7,7 @@ import cn.nukkit.Player;
 import cn.nukkit.block.Block;
 import cn.nukkit.network.protocol.BlockEventPacket;
 import cn.nukkit.network.protocol.PlaySoundPacket;
+import com.fcmcpe.nuclear.music.NuclearMusicPlugin;
 
 import java.util.ArrayList;
 
@@ -80,6 +81,10 @@ public class NoteBlockSongPlayer extends SongPlayer {
                     break;
             }
 
+            if (sound == null) {
+                continue;
+            }
+
             int key33 = note.getKey() - 33;
             switch (key33) {
                 case 0: fl = 0.5f; break;
@@ -109,28 +114,35 @@ public class NoteBlockSongPlayer extends SongPlayer {
                 case 24: fl = 2.0f; break;
             }
 
-            BlockEventPacket particlePk = new BlockEventPacket();
-            particlePk.x = (int) noteBlock.x;
-            particlePk.y = (int) noteBlock.y;
-            particlePk.z = (int) noteBlock.z;
-            particlePk.case1 = note.getInstrument();
-            particlePk.case2 = key33;
-            particlePk.tryEncode();
-
             for (String pl : players) {
                 try {
                     Player p = Server.getInstance().getPlayerExact(pl);
-                    if (p == null) continue;
-                    if (p.getLevel().getId() != noteBlock.getLevel().getId()) continue;
-                    if (sound != null) {
-                        PlaySoundPacket soundPk = new PlaySoundPacket();
-                        soundPk.name = sound.getSound();
-                        soundPk.volume = vol;
-                        soundPk.pitch = fl;
+                    if (p == null || p.getLevel().getId() != noteBlock.getLevel().getId()) {
+                        continue;
+                    }
+
+                    PlaySoundPacket soundPk = new PlaySoundPacket();
+                    soundPk.name = sound.getSound();
+                    soundPk.volume = vol * NuclearMusicPlugin.volume;
+                    soundPk.pitch = fl;
+                    if (NuclearMusicPlugin.playEverywhere) {
                         soundPk.x = (int) p.x;
                         soundPk.y = (int) p.y;
                         soundPk.z = (int) p.z;
-                        p.dataPacket(soundPk);
+                    } else {
+                        soundPk.x = (int) noteBlock.x;
+                        soundPk.y = (int) noteBlock.y;
+                        soundPk.z = (int) noteBlock.z;
+                    }
+                    p.dataPacket(soundPk);
+
+                    if (NuclearMusicPlugin.useParticles) {
+                        BlockEventPacket particlePk = new BlockEventPacket();
+                        particlePk.x = (int) noteBlock.x;
+                        particlePk.y = (int) noteBlock.y;
+                        particlePk.z = (int) noteBlock.z;
+                        particlePk.case1 = note.getInstrument();
+                        particlePk.case2 = key33;
                         p.dataPacket(particlePk);
                     }
                 } catch (Exception ignore) {}

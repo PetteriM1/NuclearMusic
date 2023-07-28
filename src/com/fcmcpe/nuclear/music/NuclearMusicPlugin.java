@@ -11,7 +11,6 @@ import cn.nukkit.item.Item;
 import cn.nukkit.level.Level;
 import cn.nukkit.level.Position;
 import cn.nukkit.plugin.PluginBase;
-import cn.nukkit.scheduler.AsyncTask;
 import cn.nukkit.utils.Config;
 import com.xxmicloxx.NoteBlockAPI.*;
 
@@ -23,6 +22,10 @@ public class NuclearMusicPlugin extends PluginBase {
     public static NuclearMusicPlugin instance;
     private final LinkedList<Song> songs = new LinkedList<>();
     private final Map<NodeIntegerPosition, SongPlayer> songPlayers = new HashMap<>();
+
+    public static boolean playEverywhere;
+    public static boolean useParticles;
+    public static float volume;
 
     static List<File> getAllNBSFiles(File path) {
         List<File> result = new ArrayList<>();
@@ -39,6 +42,13 @@ public class NuclearMusicPlugin extends PluginBase {
     @Override
     public void onEnable() {
         instance = this;
+
+        saveDefaultConfig();
+
+        playEverywhere = getConfig().getBoolean("playEverywhere", true);
+        useParticles = getConfig().getBoolean("useParticles", true);
+        volume = (float) getConfig().getDouble("volume", 1.0);
+
         loadAllSongs();
         Config noteblocks = new Config(getDataFolder() + "/noteblocks.yml", Config.YAML);
         List<String> positions = noteblocks.getStringList("positions");
@@ -76,8 +86,10 @@ public class NuclearMusicPlugin extends PluginBase {
             songPlayer.setPlaying(true);
             songPlayers.put(new NodeIntegerPosition(block), songPlayer);
         }
+
         getServer().getPluginManager().registerEvents(new NuclearMusicListener(), this);
-        getServer().getScheduler().scheduleAsyncTask(this, new TickerRunnable());
+
+        new TickerRunnable().start();
     }
 
     @Override
@@ -204,10 +216,13 @@ public class NuclearMusicPlugin extends PluginBase {
         }
     }
 
-    class TickerRunnable extends AsyncTask {
+    class TickerRunnable extends Thread {
 
-        @Override
-        public void onRun() {
+        TickerRunnable() {
+            setName("NuclearMusic");
+        }
+
+        public void run() {
             while (isEnabled()) {
                 try {
                     NoteBlockAPI.getInstance().playingSongs.forEach((s, a) -> a.forEach((SongPlayer::tryPlay)));

@@ -1,0 +1,8 @@
+# whether everyone in that world can hear the music or only players near the block
+playEverywhere: true
+
+# whether particles are shown above the note block
+useParticles: true
+
+# volume 0.0 - 1.0
+volume: 1.0
