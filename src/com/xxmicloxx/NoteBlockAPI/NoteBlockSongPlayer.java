@@ -121,6 +121,11 @@ public class NoteBlockSongPlayer extends SongPlayer {
                         continue;
                     }
 
+                    double distance = p.distanceSquared(noteBlock);
+                    if (!NuclearMusicPlugin.playEverywhere && (distance = p.distanceSquared(noteBlock)) > 2500) {
+                        continue;
+                    }
+
                     PlaySoundPacket soundPk = new PlaySoundPacket();
                     soundPk.name = sound.getSound();
                     soundPk.volume = vol * NuclearMusicPlugin.volume;
@@ -136,7 +141,7 @@ public class NoteBlockSongPlayer extends SongPlayer {
                     }
                     p.dataPacket(soundPk);
 
-                    if (NuclearMusicPlugin.useParticles) {
+                    if (NuclearMusicPlugin.useParticles && distance < 2500) {
                         BlockEventPacket particlePk = new BlockEventPacket();
                         particlePk.x = (int) noteBlock.x;
                         particlePk.y = (int) noteBlock.y;
